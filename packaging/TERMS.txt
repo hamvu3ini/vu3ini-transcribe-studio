@@ -1,0 +1,32 @@
+VU3INI Transcribe Studio — Terms of Use and Disclaimer
+By Sasanka Boruah -VU3INI  (hamvu3ini@gmail.com)
+
+1. Personal use. This software is for personal, non-commercial use only.
+
+2. Your responsibility. You are solely responsible for all audio, video and text you
+   process with this software, for obtaining the consent of every person recorded, and
+   for complying with all applicable laws, including privacy, recording and copyright
+   laws. You agree to indemnify and hold harmless the developer against any claim,
+   loss or liability arising from your use of the software.
+
+3. No warranty. The software is provided "AS IS", without warranty of any kind, express
+   or implied, including fitness for a particular purpose. Transcripts and translations
+   may contain errors. In no event shall the developer be liable for any direct,
+   indirect, incidental, special, consequential or data-loss damages arising from the
+   use of, or inability to use, the software.
+
+4. Open-source attribution. This software builds on:
+     - OpenAI Whisper — https://github.com/openai/whisper (MIT)
+     - AI4Bharat IndicWhisper / Vistaar — https://github.com/AI4Bharat/vistaar (MIT)
+     - AI4Bharat IndicTrans2 — https://github.com/AI4Bharat/IndicTrans2 (MIT)
+     - SYSTRAN faster-whisper — https://github.com/SYSTRAN/faster-whisper (MIT)
+     - k2-fsa sherpa-onnx — https://github.com/k2-fsa/sherpa-onnx (Apache-2.0)
+   and on the bundled third-party components listed in the "licences" folder and in
+   Help > About, each under its own licence. Model packs carry their own licences.
+
+5. Governing law. These terms are governed by the laws of India, including the
+   Information Technology Act, 2000 and the Digital Personal Data Protection Act, 2023.
+   Courts at Guwahati, Assam shall have exclusive jurisdiction.
+
+By clicking 'Agree / OK', you acknowledge that you have read, understood and agree to be
+legally bound by these Terms of Use and Disclaimer.

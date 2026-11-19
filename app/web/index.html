@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VU3INI Transcribe Studio</title>
+<link rel="icon" href="/assets/favicon.png">
+<link rel="stylesheet" href="/style.css">
+<script src="/assets/theme-boot.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <img id="brandLogo" src="/assets/logo-96.png" alt="VU3INI logo">
+    <div><div class="brand-name">VU3INI Transcribe Studio</div><div class="brand-ver">v{{VERSION}}</div></div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-view="home" class="on">Transcribe</button>
+    <button data-view="live">Live</button>
+    <button data-view="projects">Projects</button>
+    <button data-view="packs">Model packs</button>
+    <button data-view="settings">Settings</button>
+  </nav>
+  <div class="top-actions">
+    <button id="themeBtn" class="icon-btn" title="Switch dark / light theme" aria-label="Toggle theme"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg></button>
+    <div class="menu-wrap">
+      <button id="helpBtn" class="btn ghost">Help ▾</button>
+      <div class="menu" id="helpMenu">
+        <button data-act="help">User guide</button>
+        <button data-act="shortcuts">Keyboard shortcuts</button>
+        <button data-act="about">About</button>
+      </div>
+    </div>
+    <button id="shutdownBtn" class="btn danger" title="Stop the app and close every background process">Shut down</button>
+  </div>
+</header>
+
+<main>
+  <!-- ============ Transcribe ============ -->
+  <section class="view on" id="view-home">
+    <div class="grid2">
+      <div class="card">
+        <h2>New transcription</h2>
+        <div id="drop" class="drop" tabindex="0">
+          <div class="drop-icon">⇪</div>
+          <div><b>Drop audio or video files here</b><br><span class="muted">or click to choose · MP3, WAV, M4A, FLAC, OGG, MP4, MKV, MOV…</span></div>
+          <input type="file" id="fileInput" multiple accept="audio/*,video/*,.mkv,.opus,.amr,.3gp">
+        </div>
+        <div class="opts">
+          <label>Language <select id="optLang" class="lang-select"></select></label>
+          <label>Engine <select id="optEngine" class="engine-select"></select></label>
+          <label class="chk"><input type="checkbox" id="optDiar"> Identify speakers</label>
+          <label>Speakers <input type="number" id="optSpk" min="0" max="20" value="0" title="0 = detect automatically"></label>
+          <label class="chk"><input type="checkbox" id="optDenoise"> Reduce noise</label>
+          <label class="chk"><input type="checkbox" id="optNorm" checked> Normalise loudness</label>
+          <label class="chk"><input type="checkbox" id="optTrim"> Trim long silences</label>
+        </div>
+        <details class="batch">
+          <summary>Transcribe a whole folder</summary>
+          <div class="row">
+            <input type="text" id="batchFolder" placeholder="e.g. D:\Recordings\Interviews">
+            <label class="chk"><input type="checkbox" id="batchRec"> Include sub-folders</label>
+            <button class="btn" id="batchBtn">Add folder to queue</button>
+          </div>
+          <p class="muted small">Files are copied into the app; your originals are not changed.</p>
+        </details>
+        <div id="noPackWarn" class="warn hidden">No speech model is installed yet. Go to <a href="#" data-goto="packs">Model packs</a> and install one to start transcribing.</div>
+      </div>
+      <div class="card">
+        <div class="row between"><h2>Queue</h2>
+          <div class="row"><button class="btn ghost" id="pauseBtn">Pause queue</button><button class="btn ghost" id="clearBtn">Clear finished</button></div></div>
+        <div id="jobList" class="jobs"><p class="muted">Nothing in the queue.</p></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row between"><h2>Recent projects</h2><a href="#" data-goto="projects">All projects →</a></div>
+      <div id="recentList" class="plist"></div>
+    </div>
+  </section>
+
+  <!-- ============ Editor ============ -->
+  <section class="view" id="view-editor">
+    <div class="card ed-head">
+      <div class="row between wrap">
+        <div class="row wrap">
+          <button class="btn ghost" id="edBack">← Back</button>
+          <input id="edName" class="title-input" aria-label="Project name">
+          <span id="edMeta" class="muted small"></span>
+        </div>
+        <div class="row wrap">
+          <span id="edDirty" class="dirty hidden">● unsaved</span>
+          <button class="btn primary" id="edSave">Save</button>
+          <div class="menu-wrap"><button class="btn" id="edVerBtn">History ▾</button><div class="menu" id="edVerMenu"></div></div>
+          <div class="menu-wrap"><button class="btn" id="edExportBtn">Export ▾</button>
+            <div class="menu wide" id="edExportMenu">
+              <div class="menu-opts">
+                <label>Text <select id="exText"><option value="original">Original</option><option value="translation">Translation</option><option value="both">Both</option></select></label>
+                <label class="chk"><input type="checkbox" id="exSpk" checked> Speakers</label>
+                <label class="chk"><input type="checkbox" id="exTs" checked> Timestamps</label>
+              </div>
+              <button data-fmt="srt">SRT subtitles</button><button data-fmt="vtt">WebVTT subtitles</button>
+              <button data-fmt="txt">Plain text (.txt)</button><button data-fmt="docx">Word (.docx)</button>
+              <button data-fmt="pdf">PDF (Indic fonts embedded)</button><button data-fmt="json">JSON (with word timings)</button>
+              <button data-fmt="csv">CSV (Excel)</button><button data-fmt="html">Shareable HTML page + player</button>
+              <button id="burnBtn" data-fmt="burn">Video with burned-in subtitles</button>
+            </div></div>
+        </div>
+      </div>
+      <div class="row wrap tags-row">
+        <label class="small">Tags <input id="edTags" placeholder="comma, separated"></label>
+        <span id="edNotes" class="muted small"></span>
+      </div>
+    </div>
+
+    <div class="card player">
+      <div class="wave-wrap">
+        <canvas id="wave" height="110"></canvas>
+      </div>
+      <div class="row wrap player-row">
+        <button class="btn" id="pBack" title="Back 5 s (Alt+←)">⏪ 5s</button>
+        <button class="btn primary" id="pPlay" title="Play / pause (Ctrl+Space)">▶ Play</button>
+        <button class="btn" id="pFwd" title="Forward 5 s (Alt+→)">5s ⏩</button>
+        <span id="pTime" class="mono">0:00 / 0:00</span>
+        <label class="small">Speed <select id="pSpeed"><option>0.5</option><option>0.75</option><option selected>1</option><option>1.25</option><option>1.5</option><option>2</option></select></label>
+        <label class="small">Zoom <input type="range" id="pZoom" min="1" max="40" value="1"></label>
+        <label class="chk small"><input type="checkbox" id="pFollow" checked> Follow</label>
+        <audio id="audio" preload="auto"></audio>
+      </div>
+    </div>
+
+    <div class="grid-ed">
+      <div class="card tx-card">
+        <div class="row wrap toolbar">
+          <label class="small">Show <select id="viewText"><option value="original">Original</option><option value="roman">Roman script</option><option value="translation">Translation</option><option value="both">Original + translation</option></select></label>
+          <label class="chk small"><input type="checkbox" id="heatToggle"> Confidence heatmap</label>
+          <input id="findBox" placeholder="Find…" class="small-input">
+          <input id="replBox" placeholder="Replace with…" class="small-input">
+          <button class="btn small" id="replAll">Replace all</button>
+          <span id="findCount" class="muted small"></span>
+        </div>
+        <div id="txList" class="tx-list" aria-label="Transcript"></div>
+      </div>
+      <aside class="side">
+        <div class="card">
+          <h3>Speakers</h3>
+          <div id="spkList" class="spk-list"></div>
+          <div class="row"><button class="btn small" id="addSpk">+ Add speaker</button><button class="btn small" id="reDiar">Find speakers again</button></div>
+          <h4>Talk time</h4>
+          <div id="spkStats"></div>
+        </div>
+        <div class="card">
+          <h3>Translate (IndicTrans2)</h3>
+          <div class="row wrap">
+            <select id="trTarget"></select>
+            <button class="btn" id="trBtn">Translate</button>
+          </div>
+          <p class="muted small" id="trInfo"></p>
+        </div>
+        <div class="card">
+          <h3>Re-run</h3>
+          <div class="row wrap">
+            <select id="reLang" class="lang-select"></select>
+            <select id="reEngine" class="engine-select"></select>
+            <button class="btn" id="reBtn">Transcribe again</button>
+          </div>
+          <p class="muted small">Your current text is kept in History.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ Live ============ -->
+  <section class="view" id="view-live">
+    <div class="card">
+      <h2>Live microphone transcription</h2>
+      <div class="row wrap">
+        <label>Language <select id="liveLang" class="lang-select"></select></label>
+        <label>Engine <select id="liveEngine" class="engine-select"></select></label>
+        <input id="liveName" placeholder="Recording name (optional)">
+        <button class="btn primary" id="liveBtn">● Start</button>
+        <div class="meter"><div id="liveMeter"></div></div>
+        <span id="liveStatus" class="muted"></span>
+      </div>
+      <p class="muted small">Audio stays on this PC. When you stop, the recording and transcript are saved as a project you can edit.</p>
+      <div id="liveOut" class="live-out"></div>
+      <div id="livePartial" class="live-partial"></div>
+    </div>
+  </section>
+
+  <!-- ============ Projects ============ -->
+  <section class="view" id="view-projects">
+    <div class="card">
+      <div class="row between wrap"><h2>Projects</h2>
+        <input id="projSearch" placeholder="Search names, tags and every transcript…" class="search-input"></div>
+      <div id="searchHits" class="hits"></div>
+      <div id="projList" class="plist"></div>
+    </div>
+  </section>
+
+  <!-- ============ Packs ============ -->
+  <section class="view" id="view-packs">
+    <div class="card">
+      <div class="row between wrap"><h2>Get model packs</h2><span class="badge-online">Needs internet for this step only</span></div>
+      <p class="muted">Tick the packs you want and click <b>Download and install</b>. The app downloads each model, converts it and installs it — nothing else in the app ever goes online. Progress shows in the queue on the Transcribe tab.</p>
+      <table class="tbl" id="catTbl"><thead><tr><th></th><th>Pack</th><th>Languages</th><th>Size</th><th></th></tr></thead><tbody></tbody></table>
+      <details class="custom-pack" id="customBox">
+        <summary>Add a custom Hugging Face speech model (e.g. a community Assamese fine-tune)</summary>
+        <div class="custom-grid">
+          <label>Model id <input id="cRepo" placeholder="owner/model-name, e.g. anuragshas/whisper-large-v2-as" spellcheck="false"></label>
+          <label>Model type <select id="cEngine"><option value="ct2">Whisper model — convert for speed (recommended)</option><option value="hf">Other model (wav2vec2 etc.) — run with transformers, CPU only</option></select></label>
+          <label>Language <select id="cLang"></select></label>
+        </div>
+      </details>
+      <div class="custom-grid">
+        <label>Hugging Face token <input id="hfToken" type="password" autocomplete="off" placeholder="only for gated models such as IndicTrans2 — not saved"></label>
+        <label class="chk"><input type="checkbox" id="keepPacks"> Also keep the .vtpack files to copy to other PCs</label>
+      </div>
+      <div class="row wrap"><button class="btn primary" id="dlBtn">Download and install</button><span id="dlMsg" class="muted small"></span></div>
+    </div>
+    <div class="card">
+      <h2>Installed packs</h2>
+      <p class="muted">Already have <code>.vtpack</code> files (for example made on another PC with this app)? Install them here — no internet needed.</p>
+      <div class="row wrap">
+        <label class="btn primary file-btn">Install pack from file…<input type="file" id="packFile" accept=".vtpack,.zip"></label>
+        <input id="packPath" placeholder="…or paste the full path, e.g. D:\packs\whisper-large-v3-turbo.vtpack" class="grow">
+        <button class="btn" id="packPathBtn">Install from path</button>
+      </div>
+      <table class="tbl" id="packTbl"><thead><tr><th>Pack</th><th>Type</th><th>Languages</th><th>Size</th><th>Licence</th><th></th></tr></thead><tbody></tbody></table>
+      <div id="deviceInfo" class="muted small"></div>
+    </div>
+    <div class="card">
+      <div class="row between wrap"><h2>Engine for each language</h2><span id="leMsg" class="muted small"></span></div>
+      <p class="muted">Pick which installed pack transcribes each language. <b>Automatic</b> uses a language-specific pack (such as IndicWhisper Hindi) when one is installed, otherwise the multilingual Whisper pack. Your choice applies to new transcriptions, Live mode and re-runs whenever the engine is set to Automatic.</p>
+      <div id="langEngines" class="lang-engines"></div>
+      <div class="row"><button class="btn primary" id="leSave">Save choices</button><button class="btn ghost" id="leReset">Reset all to Automatic</button></div>
+    </div>
+  </section>
+
+  <!-- ============ Settings ============ -->
+  <section class="view" id="view-settings">
+    <div class="card">
+      <h2>Settings</h2>
+      <div class="settings-grid">
+        <label>Processor <select id="sDevice"><option value="auto">Automatic (GPU if available)</option><option value="cuda">NVIDIA GPU (CUDA)</option><option value="cpu">CPU only</option></select></label>
+        <label>Precision <select id="sCompute"><option value="auto">Automatic</option><option value="float16">float16 (GPU)</option><option value="int8_float16">int8 + float16 (GPU, less memory)</option><option value="int8">int8 (CPU, fast)</option><option value="float32">float32 (slow, exact)</option></select></label>
+        <label>Default language <select id="sLang" class="lang-select"></select></label>
+        <label>Default engine <select id="sEngine" class="engine-select"></select></label>
+        <label>Beam size <input type="number" id="sBeam" min="1" max="10"></label>
+        <label>CPU threads <input type="number" id="sThreads" min="0" max="64" title="0 = automatic"></label>
+        <label>Max speakers <input type="number" id="sSpk" min="0" max="20" title="0 = automatic"></label>
+        <label>Translate to <select id="sTr"></select></label>
+        <label class="chk"><input type="checkbox" id="sVad"> Skip silence (voice activity detection)</label>
+        <label class="chk"><input type="checkbox" id="sWords"> Word-level timestamps</label>
+        <label class="chk"><input type="checkbox" id="sCode"> Mixed-language speech (code-switching)</label>
+        <label class="chk"><input type="checkbox" id="sGuard"> Hallucination guard</label>
+        <label class="chk"><input type="checkbox" id="sDenoise"> Reduce noise by default</label>
+        <label class="chk"><input type="checkbox" id="sNorm"> Normalise loudness by default</label>
+        <label class="chk"><input type="checkbox" id="sTrim"> Trim long silences by default</label>
+        <label class="chk"><input type="checkbox" id="sDiar"> Identify speakers by default</label>
+      </div>
+      <div class="grid2">
+        <label class="block">Custom vocabulary <span class="muted small">(one word or phrase per line: names, places, call signs…)</span>
+          <textarea id="sVocab" rows="6"></textarea></label>
+        <label class="block">Automatic corrections <span class="muted small">(one per line: <code>wrong => right</code>)</span>
+          <textarea id="sRepl" rows="6"></textarea></label>
+      </div>
+      <div class="row"><button class="btn primary" id="sSave">Save settings</button><span id="sMsg" class="muted"></span></div>
+      <p class="muted small" id="sPaths"></p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">By Sasanka Boruah -VU3INI</footer>
+
+<!-- ============ Modals ============ -->
+<div class="backdrop" id="splash" role="dialog" aria-modal="true" aria-labelledby="splashTitle">
+  <div class="splash" id="splashBox">
+    <div class="splash-head">
+      <div class="logo-circle"><img src="/assets/logo.png" alt="VU3INI logo" id="splashLogo"></div>
+      <div>
+        <div class="splash-name" id="splashTitle">VU3INI Transcribe Studio</div>
+        <div class="splash-ver">Version {{VERSION}}</div>
+        <div class="splash-by">By Sasanka Boruah -VU3INI</div>
+      </div>
+    </div>
+    <div class="terms" id="terms" tabindex="0">
+      <b>Terms of Use &amp; Disclaimer</b>
+      <ol>
+        <li><b>Personal use.</b> This software is for personal, non-commercial use only.</li>
+        <li><b>Your responsibility.</b> You are solely responsible for all audio, video and text you process with it, for obtaining the consent of every person recorded, and for complying with all applicable laws, including privacy, recording and copyright laws. You agree to indemnify and hold harmless the developer against any claim arising from your use.</li>
+        <li><b>No warranty.</b> The software is provided "AS IS", without warranty of any kind, express or implied. Transcripts and translations may contain errors. The developer is not liable for any direct, indirect, incidental, special, consequential or data-loss damages arising from its use.</li>
+        <li><b>Open-source attribution.</b> Built on OpenAI Whisper (github.com/openai/whisper, MIT), AI4Bharat IndicWhisper/Vistaar (github.com/AI4Bharat/vistaar, MIT), AI4Bharat IndicTrans2 (github.com/AI4Bharat/IndicTrans2, MIT), SYSTRAN faster-whisper (MIT) and k2-fsa sherpa-onnx (Apache-2.0), and on the bundled third-party components listed in Help → About, each under its own licence. Model packs carry their own licences.</li>
+        <li><b>Governing law.</b> These terms are governed by the laws of India, including the Information Technology Act, 2000 and the Digital Personal Data Protection Act, 2023. Courts at Guwahati, Assam have exclusive jurisdiction.</li>
+      </ol>
+      <p>By clicking 'Agree / OK', you acknowledge that you have read, understood and agree to be legally bound by these Terms of Use and Disclaimer.</p>
+    </div>
+    <div class="splash-btns">
+      <button class="btn danger" id="splashExit">Exit</button>
+      <button class="btn primary" id="splashOk" disabled>Agree / OK (3)</button>
+    </div>
+  </div>
+</div>
+
+<div class="backdrop hidden" id="helpModal" role="dialog" aria-modal="true" aria-label="User guide">
+  <div class="modal large">
+    <div class="row between"><h2>User guide</h2><button class="icon-btn close" data-close="helpModal" aria-label="Close">✕</button></div>
+    <input id="helpSearch" class="search-input" placeholder="Search the guide… (e.g. speakers, export, GPU)">
+    <div class="help-body"><nav id="helpToc"></nav><div id="helpContent"></div></div>
+  </div>
+</div>
+
+<div class="backdrop hidden" id="aboutModal" role="dialog" aria-modal="true" aria-label="About">
+  <div class="modal">
+    <div class="row between"><h2>About</h2><button class="icon-btn close" data-close="aboutModal" aria-label="Close">✕</button></div>
+    <div class="about-head"><div class="logo-circle big"><img src="/assets/logo.png" alt="VU3INI logo"></div>
+      <div><div class="splash-name" id="aboutName">VU3INI Transcribe Studio</div><div id="aboutVer"></div>
+        <div>By Sasanka Boruah -VU3INI</div><div><a id="aboutEmail" href="mailto:hamvu3ini@gmail.com">hamvu3ini@gmail.com</a></div></div></div>
+    <h3>Source credit</h3><ul id="aboutSources"></ul>
+    <h3>Bundled components and licences</h3><table class="tbl" id="aboutComps"><tbody></tbody></table>
+    <p class="muted small">Full licence texts are in the <code>licences</code> folder of the installation.</p>
+  </div>
+</div>
+
+<div class="backdrop hidden" id="keysModal" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+  <div class="modal">
+    <div class="row between"><h2>Keyboard shortcuts</h2><button class="icon-btn close" data-close="keysModal" aria-label="Close">✕</button></div>
+    <table class="tbl"><tbody>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Space</kbd></td><td>Play / pause</td></tr>
+      <tr><td><kbd>Alt</kbd>+<kbd>←</kbd> / <kbd>→</kbd></td><td>Back / forward 5 seconds</td></tr>
+      <tr><td><kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd></td><td>Previous / next segment</td></tr>
+      <tr><td><kbd>Alt</kbd>+<kbd>[</kbd> / <kbd>]</kbd></td><td>Slower / faster playback</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Save</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Enter</kbd></td><td>Split segment at the cursor</td></tr>
+      <tr><td><kbd>F1</kbd></td><td>User guide</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div class="backdrop hidden" id="closedScreen"><div class="modal"><h2>VU3INI Transcribe Studio has shut down</h2><p>All background processes have stopped. You can close this tab.</p></div></div>
+<div id="toast" class="toast hidden"></div>
+<script src="/app.js"></script>
+</body>
+</html>
